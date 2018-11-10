@@ -1,6 +1,9 @@
 package com.jaf.dev.carteiradeclientes;
 
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -15,12 +18,25 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.jaf.dev.carteiradeclientes.database.DadosOpenHelper;
+import com.jaf.dev.carteiradeclientes.dominio.entidades.Cliente;
+import com.jaf.dev.carteiradeclientes.dominio.repositorio.ClienteRepositorio;
+
 public class ActCadCliente extends AppCompatActivity {
 
     private EditText edtNome;
     private EditText edtEndereco;
     private EditText edtEmail;
     private EditText edtTelefone;
+    private ConstraintLayout layoutContentActCadCliente;
+
+    private ClienteRepositorio clienteRepositorio;
+
+    private SQLiteDatabase conexao;
+    private DadosOpenHelper dadosOpenHelper;
+
+    private Cliente cliente;
+
 
 
     @Override
@@ -34,9 +50,50 @@ public class ActCadCliente extends AppCompatActivity {
         edtEndereco = (EditText)findViewById(R.id.edtEndereco);
         edtEmail    = (EditText)findViewById(R.id.edtEmail);
         edtTelefone = (EditText)findViewById(R.id.edtTelefone);
+        layoutContentActCadCliente = (ConstraintLayout)findViewById(R.id.layoutContentActCadCliente);
+
+        criarConexao();
     }
 
-    private void validaCampos(){//recupera os campos
+    private void criarConexao(){
+        try{
+            dadosOpenHelper = new DadosOpenHelper(this);
+            conexao = dadosOpenHelper.getWritableDatabase();
+
+            Snackbar.make(layoutContentActCadCliente,R.string.message_conexao_criada_com_sucesso, Snackbar.LENGTH_SHORT )
+                    .setAction(R.string.action_ok, null).show();
+            clienteRepositorio = new ClienteRepositorio(conexao);
+
+        }catch(SQLException ex){
+            AlertDialog.Builder dlg = new AlertDialog.Builder(this);
+            dlg.setTitle(R.string.title_erro);
+            dlg.setMessage(ex.getMessage());
+            dlg.setNeutralButton(R.string.action_ok, null);
+            dlg.show();
+
+        }
+
+    }
+    private void confirmar(){
+
+        cliente = new Cliente();
+        if(validaCampos() == false){
+            try{
+            clienteRepositorio.inserir(cliente);
+            finish();
+            }catch(SQLException ex){
+                AlertDialog.Builder dlg = new AlertDialog.Builder(this);
+                dlg.setTitle(R.string.title_erro);
+                dlg.setMessage(ex.getMessage());
+                dlg.setNeutralButton(R.string.action_ok, null);
+                dlg.show();
+
+            }
+        }
+
+    }
+
+    private boolean validaCampos(){//recupera os campos
 
         boolean res = false;
 
@@ -44,6 +101,11 @@ public class ActCadCliente extends AppCompatActivity {
         String endereco = edtEndereco.getText().toString();
         String email    = edtEmail.getText().toString();
         String telefone = edtTelefone.getText().toString();
+
+        cliente.nome     = nome;
+        cliente.endereco = endereco;
+        cliente.email    = email;
+        cliente.telefone = telefone;
 
         //valida os campos
         if(res = isCampoVazio(nome)){
@@ -65,6 +127,7 @@ public class ActCadCliente extends AppCompatActivity {
              dlg.setNeutralButton(R.string.action_ok, null);
              dlg.show();
          }
+         return res;
     }
 
     private boolean isCampoVazio(String valor){//valida campos vazios
@@ -91,7 +154,7 @@ public class ActCadCliente extends AppCompatActivity {
 
         switch (id){
             case R.id.action_ok:
-                validaCampos();
+                confirmar();
                 //Toast.makeText(this, "Botão Ok Selecionado", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.action_cancelar:
