@@ -15,6 +15,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.jaf.dev.carteiradeclientes.database.DadosOpenHelper;
+import com.jaf.dev.carteiradeclientes.dominio.entidades.Cliente;
+import com.jaf.dev.carteiradeclientes.dominio.repositorio.ClienteRepositorio;
+
+import java.util.List;
 
 public class ActMain extends AppCompatActivity {
 
@@ -25,6 +29,8 @@ public class ActMain extends AppCompatActivity {
 
     private SQLiteDatabase conexao;
     private DadosOpenHelper dadosOpenHelper;
+    private ClienteRepositorio clienteRepositorio;
+    private ClienteAdapter clienteAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,14 @@ public class ActMain extends AppCompatActivity {
         layoutContentMain = (ConstraintLayout) findViewById(R.id.layoutContentMain);
 
         criarConexao();
+        //erro deve estar aqui
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        lstDados.setLayoutManager(linearLayoutManager);
+        clienteRepositorio = new ClienteRepositorio(conexao);
+        List<Cliente>dados = clienteRepositorio.buscarTodos();
+        clienteAdapter = new ClienteAdapter(dados);
+        lstDados.setAdapter(clienteAdapter);
+        //
 
 
         }
